@@ -1,7 +1,7 @@
 package com.spring.ai.tutorial.service.impl;
 
 import com.spring.ai.tutorial.service.ChatService;
-import java.util.function.Function;
+import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.model.ChatModel;
@@ -29,7 +29,7 @@ public class ChatServiceImpl implements ChatService {
   @Value("${com.ai.springAiTutorial.temperature}")
   private Double temperature;
 
-  private final Function<ChatResponse, Boolean> isResponseValid =
+  private final Predicate<ChatResponse> isResponseValid =
       response ->
           response != null
               && response.getResult() != null
@@ -57,13 +57,11 @@ public class ChatServiceImpl implements ChatService {
     return streamingChatModel.stream(prompt)
         .mapNotNull(
             response -> {
-              if (Boolean.TRUE.equals(isResponseValid.apply(response))) {
+              if (isResponseValid.test(response)) {
                 return response.getResult().getOutput().getText();
               } else {
                 return null;
               }
             });
-
-//    return streamingChatModel.stream(prompt).map(response -> response.getResult().getOutput().getText());
   }
 }
