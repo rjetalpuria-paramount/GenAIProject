@@ -6,10 +6,39 @@ This is a tutorial for using the GenAI library.
 
 ## Local Setup:
 1. LM Studio: Download and host LLM models locally.
-   - Listens on port 1234.
+   - Listens on port 1234 (default)
 2. Nginx Proxy: For converting HTTP2 request made by the OpenAI client to HTTP1.1.
     - Listens on port 8081 and forwards requests to LM Studio on port 1234.
-3. This Spring Boot application: For serving the GenAI API.
+    - Run the following in the terminal:
+    ```bash
+    docker-compose -f ./nginx/docker-compose.yml up -d
+    ```
+3. PostgreSQL: Database for storing chat data.
+    - Listens on port 8082
+    - Run the following in the terminal:
+    ```bash
+    docker-compose -f ./postgres/docker-compose.yml up -d
+    ```
+   - Make sure the specify the following environment variables for setting up database connection:
+    ```yaml
+    `DB_URL` # JDBC URL e.g. jdbc:postgresql://localhost:5432/my_database
+    `DB_USERNAME` # username
+    `DB_PASSWORD` # password
+    ```
+   - The project uses the DB to store chat history via Spring's JdbcChatMemory, and Spring expects `ai_chat_memory` table to be present in the database.
+     - Run the following SQL query to setup the table:
+       ```sql
+       CREATE TABLE ai_chat_memory (
+         "id" SERIAL NOT NULL,
+         "conversation_id" VARCHAR(40),
+         "content" TEXT NOT NULL,
+         "type" VARCHAR(10) NOT NULL,
+         "timestamp" TIMESTAMP NOT NULL DEFAULT NOW(),
+         PRIMARY KEY (id)
+       );
+       CREATE INDEX idx_memory_conversation_id ON ai_chat_memory ("conversation_id");
+       ```
+4. This Spring Boot application: For serving the GenAI API.
     - Listens on port 8080 and makes calls to the model hosted on LM Studio via Nginx.
 
 ## Problems Faced:

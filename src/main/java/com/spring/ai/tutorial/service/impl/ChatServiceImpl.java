@@ -13,13 +13,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.memory.InMemoryChatMemory;
+import org.springframework.ai.chat.memory.jdbc.JdbcChatMemory;
+import org.springframework.ai.chat.memory.jdbc.JdbcChatMemoryConfig;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
@@ -28,6 +30,7 @@ import reactor.core.publisher.Flux;
 @RequiredArgsConstructor
 public class ChatServiceImpl implements ChatService {
   private final ChatModel chatModel;
+  private final JdbcTemplate jdbcTemplate;
   private ChatMemory chatMemory;
   private ChatClient chatClient;
 
@@ -51,7 +54,8 @@ public class ChatServiceImpl implements ChatService {
 
   @PostConstruct
   void init() {
-    chatMemory = new InMemoryChatMemory();
+    chatMemory =
+        JdbcChatMemory.create(JdbcChatMemoryConfig.builder().jdbcTemplate(jdbcTemplate).build());
     chatClient =
         ChatClient.builder(chatModel)
             .defaultAdvisors(new MessageChatMemoryAdvisor(chatMemory))
