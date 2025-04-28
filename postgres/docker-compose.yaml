@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   db:
-    image: postgres
+    image: pgvector/pgvector:pg17
     container_name: postgres_db
     environment:
       POSTGRES_PASSWORD: gen-ai # Replace with your desired password

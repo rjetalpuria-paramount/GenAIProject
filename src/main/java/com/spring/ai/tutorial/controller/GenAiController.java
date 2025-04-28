@@ -40,8 +40,14 @@ public class GenAiController {
   }
 
   @GetMapping("/chat-history")
-  public ResponseEntity<List<Message>> getChatHistory(@RequestParam(required = true) UUID chatId) {
+  public ResponseEntity<List<Message>> getChatHistory(@RequestParam UUID chatId) {
     List<Message> chatHistory = chatService.getChatHistory(chatId);
     return ResponseEntity.ok().body(chatHistory);
+  }
+
+  @GetMapping("/embed")
+  public ResponseEntity<Void> saveEmbedding(@RequestParam String message) {
+    chatService.saveEmbedding(message);
+    return ResponseEntity.ok().build();
   }
 }

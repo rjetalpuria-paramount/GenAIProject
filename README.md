@@ -11,13 +11,13 @@ This is a tutorial for using the GenAI library.
     - Listens on port 8081 and forwards requests to LM Studio on port 1234.
     - Run the following in the terminal:
     ```bash
-    docker-compose -f ./nginx/docker-compose.yml up -d
+    docker-compose -f ./nginx/docker-compose.yaml up -d
     ```
 3. PostgreSQL: Database for storing chat data.
     - Listens on port 8082
     - Run the following in the terminal:
     ```bash
-    docker-compose -f ./postgres/docker-compose.yml up -d
+    docker-compose -f ./postgres/docker-compose.yaml up -d
     ```
    - Make sure the specify the following environment variables for setting up database connection:
     ```yaml
@@ -37,6 +37,19 @@ This is a tutorial for using the GenAI library.
          PRIMARY KEY (id)
        );
        CREATE INDEX idx_memory_conversation_id ON ai_chat_memory ("conversation_id");
+       ```
+     - Run the following SQL query to setup the table and index for vector store: ([source](https://docs.spring.io/spring-ai/reference/1.0/api/vectordbs/pgvector.html#_prerequisites))
+       ```sql
+       CREATE EXTENSION IF NOT EXISTS vector;
+       CREATE EXTENSION IF NOT EXISTS hstore;
+       CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+       CREATE TABLE IF NOT EXISTS vector_store (
+       id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
+       content text,
+       metadata json,
+       embedding vector(768) -- 1536 is the default embedding dimension
+       );
+       CREATE INDEX ON vector_store USING HNSW (embedding vector_cosine_ops);
        ```
 4. This Spring Boot application: For serving the GenAI API.
     - Listens on port 8080 and makes calls to the model hosted on LM Studio via Nginx.

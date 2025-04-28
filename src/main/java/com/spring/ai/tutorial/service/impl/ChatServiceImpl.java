@@ -19,7 +19,9 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.document.Document;
 import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.vectorstore.pgvector.PgVectorStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,7 @@ import reactor.core.publisher.Flux;
 public class ChatServiceImpl implements ChatService {
   private final ChatModel chatModel;
   private final JdbcTemplate jdbcTemplate;
+  private final PgVectorStore vectorStore;
   private ChatMemory chatMemory;
   private ChatClient chatClient;
 
@@ -106,5 +109,9 @@ public class ChatServiceImpl implements ChatService {
 
   public List<Message> getChatHistory(UUID conversationId) {
     return chatMemory.get(conversationId.toString(), 100);
+  }
+
+  public void saveEmbedding(String message) {
+    vectorStore.add(List.of(new Document(message)));
   }
 }

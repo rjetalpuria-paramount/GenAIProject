@@ -12,4 +12,6 @@ public interface ChatService {
   Flux<String> getStreamingResponse(String prompt, UUID conversationId);
 
   List<Message> getChatHistory(UUID conversationId);
+
+  void saveEmbedding(String message);
 }
