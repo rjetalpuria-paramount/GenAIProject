@@ -5,15 +5,17 @@ This is a tutorial for using the GenAI library.
 **Tutorial Link:** https://www.youtube.com/watch?v=9Crrhz0pm8s
 
 ## Local Setup:
-1. LM Studio: Download and host LLM models locally.
+1. A checkout of this repo
+    - Listens on port 8080 and calls the model hosted on LM Studio via Nginx.
+2. LM Studio: Download and host LLM models locally.
    - Listens on port 1234 (default)
-2. Nginx Proxy: For converting HTTP2 request made by the OpenAI client to HTTP1.1.
+3. Nginx Proxy: For converting HTTP2 request made by the OpenAI client to HTTP1.1.
     - Listens on port 8081 and forwards requests to LM Studio on port 1234.
     - Run the following in the terminal:
     ```bash
     docker-compose -f ./nginx/docker-compose.yaml up -d
     ```
-3. PostgreSQL: Database for storing chat data.
+4. PostgreSQL: Database for storing chat data.
     - Listens on port 8082
     - Run the following in the terminal:
     ```bash
@@ -51,8 +53,13 @@ This is a tutorial for using the GenAI library.
        );
        CREATE INDEX ON vector_store USING HNSW (embedding vector_cosine_ops);
        ```
-4. This Spring Boot application: For serving the GenAI API.
-    - Listens on port 8080 and makes calls to the model hosted on LM Studio via Nginx.
+5. Atlassian PAT (Personal Access Token)
+   - Navigate [here](https://id.atlassian.com/manage-profile/security/api-tokens) and create a new token
+   - Once created, base64 encode your email and token: `<your_email>:<your_token>`
+     ```bash
+     echo -n your_email:your_token | base64
+     ```
+   - Save the encoded result in an enviroment variable called `ATLASSIAN_TOKEN`
 
 ## Problems Faced:
 ### Problem: OpenAI API is paid and I didn't want to pay for it.
