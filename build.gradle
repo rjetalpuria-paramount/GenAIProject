@@ -30,6 +30,9 @@ dependencies {
 	implementation 'org.springframework.ai:spring-ai-model-chat-memory-jdbc:1.0.0-M7'
 	implementation 'org.springframework.ai:spring-ai-starter-vector-store-pgvector:1.0.0-M7'
 
+	// OpenFeign
+	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign:4.2.1'
+
 	// Database
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.postgresql:postgresql'

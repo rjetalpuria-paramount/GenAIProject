@@ -4,6 +4,16 @@ This is a tutorial for using the GenAI library.
 
 **Tutorial Link:** https://www.youtube.com/watch?v=9Crrhz0pm8s
 
+## Principles:
+1. **No Paid APIs or Tools**: Focus on using open-source tools and libraries.
+   - The goal is to create a self-hosted solution that does not rely on paid APIs or tools. Down the line, if needed, we can switch to paid APIs without major code changes.
+2. **OpenAI API Compatibility**:
+   - The solution should be compatible with OpenAI API, allowing for easy integration with existing OpenAI clients.
+   - This is achieved by using LM Studio, which provides OpenAI API compatible endpoints.
+3. **Local Hosting**:
+   - The solution should be hosted locally, allowing for full control over the environment and data.
+   - This is achieved by using LM Studio for LLM models, Nginx for HTTP2 to HTTP1.1 conversion, and PostgreSQL for chat history storage.
+
 ## Local Setup:
 1. A checkout of this repo
     - Listens on port 8080 and calls the model hosted on LM Studio via Nginx.
@@ -59,7 +69,7 @@ This is a tutorial for using the GenAI library.
      ```bash
      echo -n your_email:your_token | base64
      ```
-   - Save the encoded result in an enviroment variable called `ATLASSIAN_TOKEN`
+   - Save the encoded result in an enviroment variable called `ATL_TOKEN`
 
 ## Problems Faced:
 ### Problem: OpenAI API is paid and I didn't want to pay for it.
@@ -78,3 +88,22 @@ This is a tutorial for using the GenAI library.
 - Use Nginx as a reverse proxy to convert HTTP2 requests to HTTP1.1.
 - Genius idea from [the spring ai Github forum](https://github.com/spring-projects/spring-ai/issues/2441)
 - Nginx listens on port 8081 and forwards requests to LM Studio on port 1234.
+### Problem: Figuring out chat history
+#### Solution:
+- Spring AI provides JdbcChatMemory for storing chat history in a database.
+- Create an uuid for each conversation and store the chat history in a PostgreSQL database.
+- Improvement (not yet implemented): Use vector store for storing chat history and retrieving relevant context for the conversation.
+### Problem: Figuring out accessing Confluence documents.
+#### Solution:
+- Use Atlassian's Confluence REST API to fetch the knowledge base.
+- Use the Atlassian PAT (Personal Access Token) for authentication.
+### Problem: Figuring out creating embeddings from the Confluence pages.
+#### Subproblem: Confluence pages are in HTML format, which also have styling and other non-semantic content.
+##### Solution:
+- Use Jsoup to parse the HTML and extract the text content.
+#### Subproblem: Figuring out the optimal chunk size for creating embeddings.
+##### Solution:
+- TBD
+### Subproblem: Figuring out embedding strategy (ex: BM25, etc.)
+##### Solution:
+- TBD
