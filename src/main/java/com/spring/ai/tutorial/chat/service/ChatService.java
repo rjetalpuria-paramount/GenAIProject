@@ -1,9 +1,8 @@
-package com.spring.ai.tutorial.service.impl;
+package com.spring.ai.tutorial.chat.service;
 
 import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY;
 import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_RETRIEVE_SIZE_KEY;
 
-import com.spring.ai.tutorial.service.ChatService;
 import jakarta.annotation.PostConstruct;
 import java.util.List;
 import java.util.UUID;
@@ -30,7 +29,7 @@ import reactor.core.publisher.Flux;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ChatServiceImpl implements ChatService {
+public class ChatService {
   private final ChatModel chatModel;
   private final JdbcTemplate jdbcTemplate;
   private final PgVectorStore vectorStore;

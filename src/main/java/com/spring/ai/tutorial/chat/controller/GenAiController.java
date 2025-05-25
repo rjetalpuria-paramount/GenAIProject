@@ -1,6 +1,6 @@
-package com.spring.ai.tutorial.controller;
+package com.spring.ai.tutorial.chat.controller;
 
-import com.spring.ai.tutorial.service.ChatService;
+import com.spring.ai.tutorial.chat.service.ChatService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
