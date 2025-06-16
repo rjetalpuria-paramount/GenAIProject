@@ -1,10 +1,11 @@
 package com.spring.ai.tutorial.confluence.client;
 
 import com.spring.ai.tutorial.confluence.model.ConfluenceDocument;
-import java.util.List;
+import com.spring.ai.tutorial.confluence.model.ConfluenceDocumentPage;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @FeignClient(
     name = "confluenceClient",
@@ -13,8 +14,9 @@ import org.springframework.web.bind.annotation.PathVariable;
     configuration = ConfluenceClientConfig.class)
 public interface ConfluenceClient {
 
-  @GetMapping("/content?spaceKey=${confluence.spaceKey}")
-  List<Object> getAllPagesInSpace();
+  @GetMapping("/content?spaceKey=${confluence.spaceKey}&expand=body.view,version")
+  ConfluenceDocumentPage getAllPagesInSpace(
+      @RequestParam(value = "start") int startIndex, @RequestParam(value = "limit") int pageSize);
 
   @GetMapping("/content/{pageId}?expand=body.view,version")
   ConfluenceDocument getPageById(@PathVariable String pageId);

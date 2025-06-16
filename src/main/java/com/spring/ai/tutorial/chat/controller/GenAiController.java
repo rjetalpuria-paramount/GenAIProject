@@ -1,9 +1,11 @@
 package com.spring.ai.tutorial.chat.controller;
 
 import com.spring.ai.tutorial.chat.service.ChatService;
+import com.spring.ai.tutorial.confluence.service.ConfluenceService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +19,7 @@ import reactor.core.publisher.Flux;
 @RequiredArgsConstructor
 public class GenAiController {
   private final ChatService chatService;
+  private final ConfluenceService confluenceService;
   private static final String CHAT_ID_HEADER = "chat-id";
 
   @GetMapping("/chat")
@@ -48,6 +51,17 @@ public class GenAiController {
   @GetMapping("/embed")
   public ResponseEntity<Void> saveEmbedding(@RequestParam String message) {
     chatService.saveEmbedding(message);
+    return ResponseEntity.ok().build();
+  }
+
+  @GetMapping("/embed-confluence-pages")
+  public ResponseEntity<Void> embedConfluencePages(
+      @RequestParam(required = false) String documentId) {
+    if (StringUtils.isNotBlank(documentId)) {
+      confluenceService.embedConfluenceDocumentById(documentId);
+    } else {
+      confluenceService.embedAllConfluenceDocuments();
+    }
     return ResponseEntity.ok().build();
   }
 }
