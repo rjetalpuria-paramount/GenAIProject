@@ -29,7 +29,13 @@ dependencies {
 	implementation 'org.springframework.ai:spring-ai-openai-spring-boot-starter'
 	implementation 'org.springframework.ai:spring-ai-model-chat-memory-jdbc:1.0.0-M7'
 	implementation 'org.springframework.ai:spring-ai-starter-vector-store-pgvector:1.0.0-M7'
-	implementation 'org.springframework.ai:spring-ai-jsoup-document-reader:1.0.0-M7'
+
+    implementation 'org.springframework.ai:spring-ai-jsoup-document-reader:1.0.0-M7' // TODO: remove this
+    implementation 'org.springframework.ai:spring-ai-markdown-document-reader:1.1.0-M2'
+
+    // HTML parsing and conversion to Markdown
+    implementation 'org.jsoup:jsoup:1.21.2'
+    implementation 'com.vladsch.flexmark:flexmark-all:0.64.8'
 
 	// OpenFeign
 	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign:4.2.1'
