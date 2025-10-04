@@ -98,7 +98,7 @@ This is a tutorial for using the GenAI library.
 - Use Atlassian's Confluence REST API to fetch the knowledge base.
 - Use the Atlassian PAT (Personal Access Token) for authentication.
 ### Problem: Figuring out how to create embeddings from the Confluence pages.
-#### Details: 
+#### Details:
 - Confluence pages are in HTML format, which also has styling and other non-semantic content.
 - Using Jsoup HTML parser directly on Confluence's HTML causes duplicated content due to the various HTML tags (especially for table formatting tags)
 ##### Solution:
