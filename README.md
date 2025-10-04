@@ -8,7 +8,7 @@ This is a tutorial for using the GenAI library.
 1. **No Paid APIs or Tools**: Focus on using open-source tools and libraries.
    - The goal is to create a self-hosted solution that does not rely on paid APIs or tools. Down the line, if needed, we can switch to paid APIs without major code changes.
 2. **OpenAI API Compatibility**:
-   - The solution should be compatible with OpenAI API, allowing for easy integration with existing OpenAI clients.
+   - The solution should be compatible with the OpenAI API, allowing for easy integration with existing OpenAI clients.
    - This is achieved by using LM Studio, which provides OpenAI API compatible endpoints.
 3. **Local Hosting**:
    - The solution should be hosted locally, allowing for full control over the environment and data.
@@ -31,14 +31,14 @@ This is a tutorial for using the GenAI library.
     ```bash
     docker-compose -f ./postgres/docker-compose.yaml up -d
     ```
-   - Make sure the specify the following environment variables for setting up database connection:
+   - Make sure the specify the following environment variables for setting up the database connection:
     ```yaml
     `DB_URL` # JDBC URL e.g. jdbc:postgresql://localhost:5432/my_database
     `DB_USERNAME` # username
     `DB_PASSWORD` # password
     ```
    - The project uses the DB to store chat history via Spring's JdbcChatMemory, and Spring expects `ai_chat_memory` table to be present in the database.
-     - Run the following SQL query to setup the table:
+     - Run the following SQL query to set up the table:
        ```sql
        CREATE TABLE ai_chat_memory (
          "id" SERIAL NOT NULL,
@@ -50,7 +50,7 @@ This is a tutorial for using the GenAI library.
        );
        CREATE INDEX idx_memory_conversation_id ON ai_chat_memory ("conversation_id");
        ```
-     - Run the following SQL query to setup the table and index for vector store: ([source](https://docs.spring.io/spring-ai/reference/1.0/api/vectordbs/pgvector.html#_prerequisites))
+     - Run the following SQL query to set up the table and index for vector store: ([source](https://docs.spring.io/spring-ai/reference/1.0/api/vectordbs/pgvector.html#_prerequisites))
        ```sql
        CREATE EXTENSION IF NOT EXISTS vector;
        CREATE EXTENSION IF NOT EXISTS hstore;
@@ -69,13 +69,13 @@ This is a tutorial for using the GenAI library.
      ```bash
      echo -n your_email:your_token | base64
      ```
-   - Save the encoded result in an enviroment variable called `ATL_TOKEN`
+   - Save the encoded result in an environment variable called `ATL_TOKEN`
 
 ## Problems Faced:
-### Problem: OpenAI API is paid and I didn't want to pay for it.
+### Problem: OpenAI API is paid, and I didn't want to pay for it.
 #### Solution:
 - Host the model locally using LM Studio.
-- It provides OpenAI API compatible endpoints, so in future, I can switch to OpenAI API without changing the code.
+- It provides OpenAI API compatible endpoints, so in the future, I can switch to OpenAI API without changing the code.
 - Provides access to various open-source models like Llama2, Mistral, etc.
 ### Problem: LM Studio doesn't support image generation.
 #### Solution:
@@ -91,19 +91,23 @@ This is a tutorial for using the GenAI library.
 ### Problem: Figuring out chat history
 #### Solution:
 - Spring AI provides JdbcChatMemory for storing chat history in a database.
-- Create an uuid for each conversation and store the chat history in a PostgreSQL database.
-- Improvement (not yet implemented): Use vector store for storing chat history and retrieving relevant context for the conversation.
-### Problem: Figuring out accessing Confluence documents.
+- Create a UUID for each conversation and store the chat history in a PostgreSQL database.
+- Improvement (not yet implemented): Use a vector store for storing chat history and retrieving relevant context for the conversation.
+### Problem: Figuring out how to access Confluence documents.
 #### Solution:
 - Use Atlassian's Confluence REST API to fetch the knowledge base.
 - Use the Atlassian PAT (Personal Access Token) for authentication.
-### Problem: Figuring out creating embeddings from the Confluence pages.
-#### Subproblem: Confluence pages are in HTML format, which also have styling and other non-semantic content.
+### Problem: Figuring out how to create embeddings from the Confluence pages.
+#### Details: 
+- Confluence pages are in HTML format, which also has styling and other non-semantic content.
+- Using Jsoup HTML parser directly on Confluence's HTML causes duplicated content due to the various HTML tags (especially for table formatting tags)
 ##### Solution:
-- Use Jsoup to parse the HTML and extract the text content.
+- Sanitize the HTML content using Jsoup - this removes styling and other tags
+- Convert it into Markdown - provides cleaner structure, and concise formatting (aka reduces token count)
+- Create Documents from converted Markdown
 #### Subproblem: Figuring out the optimal chunk size for creating embeddings.
 ##### Solution:
 - TBD
-### Subproblem: Figuring out embedding strategy (ex: BM25, etc.)
+### Subproblem: Figuring out embedding strategy (ex, BM25, etc.)
 ##### Solution:
 - TBD
