@@ -5,12 +5,10 @@ plugins {
 	id 'com.diffplug.spotless' version '6.25.0'
 }
 
-group = 'com.ai'
-version = '0.0.1-SNAPSHOT'
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
+		languageVersion = JavaLanguageVersion.of(21)
 	}
 }
 
@@ -19,17 +17,24 @@ repositories {
 }
 
 ext {
-	set('springAiVersion', "1.0.0-M6")
+	set('springAiVersion', "1.0.3")
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
+    }
 }
 
 dependencies {
 	// Spring Boot
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+
 	// Spring AI
-	implementation 'org.springframework.ai:spring-ai-openai-spring-boot-starter'
-	implementation 'org.springframework.ai:spring-ai-model-chat-memory-jdbc:1.0.0-M7'
-	implementation 'org.springframework.ai:spring-ai-starter-vector-store-pgvector:1.0.0-M7'
-    implementation 'org.springframework.ai:spring-ai-markdown-document-reader:1.1.0-M2'
+	implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+    implementation 'org.springframework.ai:spring-ai-starter-model-chat-memory-repository-jdbc'
+	implementation 'org.springframework.ai:spring-ai-starter-vector-store-pgvector'
+    implementation 'org.springframework.ai:spring-ai-markdown-document-reader'
 
     // HTML parsing and conversion to Markdown
     implementation 'org.jsoup:jsoup:1.21.2'
@@ -45,11 +50,14 @@ dependencies {
 	// Lombok
 	implementation 'org.projectlombok:lombok'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-	annotationProcessor 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
 
 	// Unit Tests
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // Misc utilities
+    implementation 'org.apache.commons:commons-lang3:3.19.0'
 }
 
 dependencyManagement {

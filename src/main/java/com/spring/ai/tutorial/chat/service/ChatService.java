@@ -1,8 +1,5 @@
 package com.spring.ai.tutorial.chat.service;
 
-import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY;
-import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_RETRIEVE_SIZE_KEY;
-
 import jakarta.annotation.PostConstruct;
 import java.util.List;
 import java.util.UUID;
@@ -12,8 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.memory.jdbc.JdbcChatMemory;
-import org.springframework.ai.chat.memory.jdbc.JdbcChatMemoryConfig;
+import org.springframework.ai.chat.memory.ChatMemoryRepository;
+import org.springframework.ai.chat.memory.MessageWindowChatMemory;
+import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -33,8 +31,8 @@ public class ChatService {
   private final ChatModel chatModel;
   private final JdbcTemplate jdbcTemplate;
   private final PgVectorStore vectorStore;
-  private ChatMemory chatMemory;
   private ChatClient chatClient;
+  private ChatMemory chatMemory;
 
   @Value("${com.ai.springAiTutorial.model}")
   private String modelName;
@@ -56,11 +54,16 @@ public class ChatService {
 
   @PostConstruct
   void init() {
+    ChatMemoryRepository chatMemoryRepository =
+        JdbcChatMemoryRepository.builder().jdbcTemplate(jdbcTemplate).build();
     chatMemory =
-        JdbcChatMemory.create(JdbcChatMemoryConfig.builder().jdbcTemplate(jdbcTemplate).build());
+        MessageWindowChatMemory.builder()
+            .chatMemoryRepository(chatMemoryRepository)
+            .maxMessages(chatMemorySize)
+            .build();
     chatClient =
         ChatClient.builder(chatModel)
-            .defaultAdvisors(new MessageChatMemoryAdvisor(chatMemory))
+            .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
             .build();
   }
 
@@ -72,11 +75,7 @@ public class ChatService {
     ChatResponse response =
         chatClient
             .prompt(prompt)
-            .advisors(
-                advisor ->
-                    advisor
-                        .param(CHAT_MEMORY_CONVERSATION_ID_KEY, conversationId)
-                        .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, chatMemorySize))
+            .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, conversationId))
             .call()
             .chatResponse();
     return isResponseValid.test(response) ? response.getResult().getOutput().getText() : null;
@@ -94,11 +93,7 @@ public class ChatService {
     Flux<ChatResponse> response =
         chatClient
             .prompt(new Prompt(msg, openAiChatOptions))
-            .advisors(
-                advisor ->
-                    advisor
-                        .param(CHAT_MEMORY_CONVERSATION_ID_KEY, conversationId)
-                        .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, chatMemorySize))
+            .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, conversationId))
             .stream()
             .chatResponse();
 
@@ -107,7 +102,7 @@ public class ChatService {
   }
 
   public List<Message> getChatHistory(UUID conversationId) {
-    return chatMemory.get(conversationId.toString(), 100);
+    return chatMemory.get(conversationId.toString());
   }
 
   public void saveEmbedding(String message) {
