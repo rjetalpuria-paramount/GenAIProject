@@ -35,6 +35,7 @@ dependencies {
     implementation 'org.springframework.ai:spring-ai-starter-model-chat-memory-repository-jdbc'
 	implementation 'org.springframework.ai:spring-ai-starter-vector-store-pgvector'
     implementation 'org.springframework.ai:spring-ai-markdown-document-reader'
+    implementation 'org.springframework.ai:spring-ai-rag'
 
     // HTML parsing and conversion to Markdown
     implementation 'org.jsoup:jsoup:1.21.2'

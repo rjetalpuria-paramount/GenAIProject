@@ -1,6 +1,7 @@
 package com.spring.ai.tutorial.chat.service;
 
 import jakarta.annotation.PostConstruct;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Predicate;
@@ -18,6 +19,11 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.ai.rag.Query;
+import org.springframework.ai.rag.advisor.RetrievalAugmentationAdvisor;
+import org.springframework.ai.rag.generation.augmentation.ContextualQueryAugmenter;
+import org.springframework.ai.rag.preretrieval.query.transformation.RewriteQueryTransformer;
+import org.springframework.ai.rag.retrieval.search.VectorStoreDocumentRetriever;
 import org.springframework.ai.vectorstore.pgvector.PgVectorStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -33,6 +39,8 @@ public class ChatService {
   private final PgVectorStore vectorStore;
   private ChatClient chatClient;
   private ChatMemory chatMemory;
+  private RewriteQueryTransformer rewriteQueryTransformer;
+  private OpenAiChatOptions chatOptions;
 
   @Value("${com.ai.springAiTutorial.model}")
   private String modelName;
@@ -54,6 +62,8 @@ public class ChatService {
 
   @PostConstruct
   void init() {
+    // Initialize ChatMemory with JDBC repository
+    // JdbcChatMemoryRepository stores chat messages in a relational database using JDBC
     ChatMemoryRepository chatMemoryRepository =
         JdbcChatMemoryRepository.builder().jdbcTemplate(jdbcTemplate).build();
     chatMemory =
@@ -61,28 +71,55 @@ public class ChatService {
             .chatMemoryRepository(chatMemoryRepository)
             .maxMessages(chatMemorySize)
             .build();
-    chatClient =
-        ChatClient.builder(chatModel)
-            .defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build())
+    MessageChatMemoryAdvisor chatMemoryAdvisor =
+        MessageChatMemoryAdvisor.builder(chatMemory).build();
+    // VectorStoreDocumentRetriever is used to retrieve relevant documents from the vector store
+    // based on the similarity to the input query
+    VectorStoreDocumentRetriever vectorStoreDocumentRetriever =
+        VectorStoreDocumentRetriever.builder()
+            .vectorStore(vectorStore)
+            .similarityThreshold(0.50)
+            .topK(5)
             .build();
+    // RetrievalAugmentationAdvisor is used to append relevant documents from the vector store to
+    // the input query to provide more context to the model
+    RetrievalAugmentationAdvisor ragAdvisor =
+        RetrievalAugmentationAdvisor.builder()
+            .documentRetriever(vectorStoreDocumentRetriever)
+            .queryAugmenter(ContextualQueryAugmenter.builder().allowEmptyContext(true).build())
+            .build();
+    // RewriteQueryTransformer is used to transform the input query before sending it to the model.
+    // It uses an LLM to rewrite the query for better context using the chat history.
+    rewriteQueryTransformer =
+        RewriteQueryTransformer.builder().chatClientBuilder(ChatClient.builder(chatModel)).build();
+    // Initialize ChatClient with ChatMemory advisor and RAG advisor
+    chatClient =
+        ChatClient.builder(chatModel).defaultAdvisors(chatMemoryAdvisor, ragAdvisor).build();
+
+    // Configure OpenAI chat options used to build the LLM API requests
+    chatOptions =
+        OpenAiChatOptions.builder().model(modelName).topP(topP).temperature(temperature).build();
   }
 
   public String getResponse(String msg, UUID conversationId) {
-    OpenAiChatOptions openAiChatOptions =
-        OpenAiChatOptions.builder().model(modelName).topP(topP).temperature(temperature).build();
-    Prompt prompt = new Prompt(msg, openAiChatOptions);
+    Query query = Query.builder().text(msg).history(getChatHistory(conversationId)).build();
+    Query transformedQuery = rewriteQueryTransformer.transform(query);
+
+    Prompt prompt = new Prompt(transformedQuery.text(), chatOptions);
 
     ChatResponse response =
         chatClient
-            .prompt(prompt)
+            .prompt(
+                Prompt.builder().chatOptions(chatOptions).content(transformedQuery.text()).build())
             .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, conversationId))
             .call()
             .chatResponse();
     return isResponseValid.test(response) ? response.getResult().getOutput().getText() : null;
   }
 
+  // TODO: This needs to be updated with RAG functionality.
   public Flux<String> getStreamingResponse(String msg, UUID conversationId) {
-    OpenAiChatOptions openAiChatOptions =
+    OpenAiChatOptions openAiStreamingChatOptions =
         OpenAiChatOptions.builder()
             .model(modelName)
             .topP(topP)
@@ -92,7 +129,7 @@ public class ChatService {
 
     Flux<ChatResponse> response =
         chatClient
-            .prompt(new Prompt(msg, openAiChatOptions))
+            .prompt(new Prompt(msg, openAiStreamingChatOptions))
             .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, conversationId))
             .stream()
             .chatResponse();
@@ -102,9 +139,12 @@ public class ChatService {
   }
 
   public List<Message> getChatHistory(UUID conversationId) {
-    return chatMemory.get(conversationId.toString());
+    return conversationId != null
+        ? chatMemory.get(conversationId.toString())
+        : Collections.emptyList();
   }
 
+  @Deprecated
   public void saveEmbedding(String message) {
     vectorStore.add(List.of(new Document(message)));
   }

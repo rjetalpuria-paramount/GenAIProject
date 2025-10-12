@@ -48,12 +48,14 @@ public class GenAiController {
     return ResponseEntity.ok().body(chatHistory);
   }
 
+  @Deprecated
   @GetMapping("/embed")
   public ResponseEntity<Void> saveEmbedding(@RequestParam String message) {
     chatService.saveEmbedding(message);
     return ResponseEntity.ok().build();
   }
 
+  // TODO: Move this to a dedicated embedding controller
   @GetMapping("/embed-confluence-pages")
   public ResponseEntity<Void> embedConfluencePages(
       @RequestParam(required = false) String documentId) {

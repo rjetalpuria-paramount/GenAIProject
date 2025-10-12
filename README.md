@@ -19,6 +19,9 @@ This is a tutorial for using the GenAI library.
     - Listens on port 8080 and calls the model hosted on LM Studio via Nginx.
 2. LM Studio: Download and host LLM models locally.
    - Listens on port 1234 (default)
+   - Models used:
+     - [nomic-embed-text-v2-moe-GGUF](https://huggingface.co/nomic-ai/nomic-embed-text-v2-moe-GGUF)
+     - [openai/gpt-oss-20b](https://lmstudio.ai/models/openai/gpt-oss-20b)
 3. Nginx Proxy: For converting HTTP2 request made by the OpenAI client to HTTP1.1.
     - Listens on port 8081 and forwards requests to LM Studio on port 1234.
     - Run the following in the terminal:
@@ -37,10 +40,10 @@ This is a tutorial for using the GenAI library.
     `DB_USERNAME` # username
     `DB_PASSWORD` # password
     ```
-   - The project uses the DB to store chat history via Spring's JdbcChatMemory, and Spring expects `ai_chat_memory` table to be present in the database.
+   - The project uses the DB to store chat history via Spring's JdbcChatMemory, and Spring expects `spring_ai_chat_memory` table to be present in the database.
      - Run the following SQL query to set up the table:
        ```sql
-       CREATE TABLE ai_chat_memory (
+       CREATE TABLE spring_ai_chat_memory (
          "id" SERIAL NOT NULL,
          "conversation_id" VARCHAR(40),
          "content" TEXT NOT NULL,
