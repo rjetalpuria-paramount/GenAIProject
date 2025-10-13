@@ -71,6 +71,7 @@ Spring Boot project implementing a self-hosted RAG (Retrieval Augmented Generati
      echo -n your_email:your_token | base64
      ```
    - Save the encoded result in an environment variable called `ATL_TOKEN`
+   - Ref: [Confluence REST API Documentation](https://docs.atlassian.com/atlassian-confluence/REST/6.6.0/)
 
 ## Problems Faced:
 ### Problem: OpenAI API is paid, and I didn't want to pay for it.

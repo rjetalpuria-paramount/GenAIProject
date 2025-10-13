@@ -46,9 +46,18 @@ public class ConfluenceEmbeddingService implements EmbeddingService<ConfluenceDo
     return confluenceClient.getAllPagesInSpace(startIndex, pageSize).getResults();
   }
 
+  /**
+   * @param confluenceDocument The raw Confluence document to be processed.
+   * @return a list of processed Document objects ready for embedding.
+   * <br>
+   *     The method performs the following steps:
+   * <li>1. Sanitize HTML content to remove unwanted tags and attributes.
+   * <li>2. Convert sanitized HTML to Markdown format.
+   * <li>3. Create Document objects from Markdown content, adding additional metadata.
+   * <li>4. Enrich documents with keywords using the chat model.
+   */
   @Override
   public List<Document> convertToDocuments(ConfluenceDocument confluenceDocument) {
-
     log.info("Processing Confluence document: {}", confluenceDocument.getTitle());
     String sanitizedHtmlContent = sanitizeHtmlContent(confluenceDocument.getContent());
     String markdownContent = convertHtmlToMarkdown(sanitizedHtmlContent);
