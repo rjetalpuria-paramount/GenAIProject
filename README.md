@@ -1,8 +1,6 @@
-# GenAI Tutorial:
+# GenAI Project:
 
-This is a tutorial for using the GenAI library.
-
-**Tutorial Link:** https://www.youtube.com/watch?v=9Crrhz0pm8s
+Spring Boot project implementing a self-hosted RAG (Retrieval Augmented Generation) system using Spring AI, integrating with internal documentation sources like Confluence, and leveraging open-source LLMs via OpenAI-compatible APIs.
 
 ## Principles:
 1. **No Paid APIs or Tools**: Focus on using open-source tools and libraries.
