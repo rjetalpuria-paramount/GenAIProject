@@ -1,4 +1,4 @@
-package com.spring.ai.tutorial.confluence.model;
+package com.spring.ai.tutorial.embed.confluence.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

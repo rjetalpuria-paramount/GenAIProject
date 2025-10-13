@@ -1,4 +1,4 @@
-package com.spring.ai.tutorial.confluence.client;
+package com.spring.ai.tutorial.embed.confluence.client;
 
 import feign.RequestInterceptor;
 import org.springframework.beans.factory.annotation.Value;

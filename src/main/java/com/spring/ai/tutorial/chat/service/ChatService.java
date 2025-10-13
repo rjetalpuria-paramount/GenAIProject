@@ -17,7 +17,6 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.document.Document;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.rag.Query;
 import org.springframework.ai.rag.advisor.RetrievalAugmentationAdvisor;
@@ -41,6 +40,7 @@ public class ChatService {
   private ChatMemory chatMemory;
   private RewriteQueryTransformer rewriteQueryTransformer;
   private OpenAiChatOptions chatOptions;
+  private OpenAiChatOptions streamingChatOptions;
 
   @Value("${com.ai.springAiTutorial.model}")
   private String modelName;
@@ -99,13 +99,13 @@ public class ChatService {
     // Configure OpenAI chat options used to build the LLM API requests
     chatOptions =
         OpenAiChatOptions.builder().model(modelName).topP(topP).temperature(temperature).build();
+    streamingChatOptions = OpenAiChatOptions.fromOptions(chatOptions);
+    streamingChatOptions.setStreamUsage(true);
   }
 
-  public String getResponse(String msg, UUID conversationId) {
-    Query query = Query.builder().text(msg).history(getChatHistory(conversationId)).build();
+  public String getResponse(String message, UUID conversationId) {
+    Query query = Query.builder().text(message).history(getChatHistory(conversationId)).build();
     Query transformedQuery = rewriteQueryTransformer.transform(query);
-
-    Prompt prompt = new Prompt(transformedQuery.text(), chatOptions);
 
     ChatResponse response =
         chatClient
@@ -117,19 +117,14 @@ public class ChatService {
     return isResponseValid.test(response) ? response.getResult().getOutput().getText() : null;
   }
 
-  // TODO: This needs to be updated with RAG functionality.
-  public Flux<String> getStreamingResponse(String msg, UUID conversationId) {
-    OpenAiChatOptions openAiStreamingChatOptions =
-        OpenAiChatOptions.builder()
-            .model(modelName)
-            .topP(topP)
-            .temperature(temperature)
-            .streamUsage(true)
-            .build();
+  public Flux<String> getStreamingResponse(String message, UUID conversationId) {
+    Query query = Query.builder().text(message).history(getChatHistory(conversationId)).build();
+    Query transformedQuery = rewriteQueryTransformer.transform(query);
 
     Flux<ChatResponse> response =
         chatClient
-            .prompt(new Prompt(msg, openAiStreamingChatOptions))
+            .prompt(
+                Prompt.builder().chatOptions(chatOptions).content(transformedQuery.text()).build())
             .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, conversationId))
             .stream()
             .chatResponse();
@@ -142,10 +137,5 @@ public class ChatService {
     return conversationId != null
         ? chatMemory.get(conversationId.toString())
         : Collections.emptyList();
-  }
-
-  @Deprecated
-  public void saveEmbedding(String message) {
-    vectorStore.add(List.of(new Document(message)));
   }
 }

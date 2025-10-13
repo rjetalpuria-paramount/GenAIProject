@@ -1,10 +1,9 @@
-package com.spring.ai.tutorial.confluence.service;
+package com.spring.ai.tutorial.embed.confluence.service;
 
 import static com.vladsch.flexmark.html2md.converter.FlexmarkHtmlConverter.HEADING_NODES;
 
-import com.spring.ai.tutorial.confluence.client.ConfluenceClient;
-import com.spring.ai.tutorial.confluence.model.ConfluenceDocument;
-import com.spring.ai.tutorial.confluence.model.ConfluenceDocumentPage;
+import com.spring.ai.tutorial.embed.confluence.client.ConfluenceClient;
+import com.spring.ai.tutorial.embed.confluence.model.ConfluenceDocument;
 import com.spring.ai.tutorial.embed.service.EmbeddingService;
 import com.vladsch.flexmark.html2md.converter.FlexmarkHtmlConverter;
 import java.nio.charset.StandardCharsets;
@@ -14,9 +13,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
+import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.model.transformer.KeywordMetadataEnricher;
 import org.springframework.ai.reader.markdown.MarkdownDocumentReader;
 import org.springframework.ai.reader.markdown.config.MarkdownDocumentReaderConfig;
+import org.springframework.ai.vectorstore.pgvector.PgVectorStore;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -24,29 +26,29 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ConfluenceService {
-  private static final int CONFLUENCE_PAGE_SIZE = 2;
+public class ConfluenceEmbeddingService implements EmbeddingService<ConfluenceDocument> {
+  private final ChatModel chatModel;
+  private final PgVectorStore vectorStore;
   private final ConfluenceClient confluenceClient;
-  private final EmbeddingService embeddingService;
 
-  public void embedConfluenceDocumentById(String documentId) {
-    ConfluenceDocument confluenceDocument = confluenceClient.getPageById(documentId);
-    processConfluenceDocument(confluenceDocument);
+  @Override
+  public PgVectorStore getVectorStore() {
+    return vectorStore;
   }
 
-  public void embedAllConfluenceDocuments() {
-    int startIndex = 0;
-    ConfluenceDocumentPage page;
-
-    do {
-      page = confluenceClient.getAllPagesInSpace(startIndex, CONFLUENCE_PAGE_SIZE);
-      page.getResults().forEach(this::processConfluenceDocument);
-
-      startIndex = startIndex + CONFLUENCE_PAGE_SIZE;
-    } while (page.getSize() == CONFLUENCE_PAGE_SIZE);
+  @Override
+  public ConfluenceDocument getDocumentsById(String documentId) {
+    return confluenceClient.getPageById(documentId);
   }
 
-  private void processConfluenceDocument(ConfluenceDocument confluenceDocument) {
+  @Override
+  public List<ConfluenceDocument> getDocumentsByPage(int startIndex, int pageSize) {
+    return confluenceClient.getAllPagesInSpace(startIndex, pageSize).getResults();
+  }
+
+  @Override
+  public List<Document> convertToDocuments(ConfluenceDocument confluenceDocument) {
+
     log.info("Processing Confluence document: {}", confluenceDocument.getTitle());
     String sanitizedHtmlContent = sanitizeHtmlContent(confluenceDocument.getContent());
     String markdownContent = convertHtmlToMarkdown(sanitizedHtmlContent);
@@ -56,7 +58,8 @@ public class ConfluenceService {
             "docTitle", confluenceDocument.getTitle(),
             "link", confluenceDocument.getSelfLink());
     List<Document> documents = createDocumentsFromMarkdown(markdownContent, additionalMetadataMap);
-    embeddingService.generateAndPersistEmbeddings(documents);
+    documents = attachKeywords(documents);
+    return documents;
   }
 
   private String sanitizeHtmlContent(String htmlContent) {
@@ -81,5 +84,11 @@ public class ConfluenceService {
     Resource resource = new ByteArrayResource(markdownContent.getBytes(StandardCharsets.UTF_8));
     MarkdownDocumentReader reader = new MarkdownDocumentReader(resource, config);
     return reader.get();
+  }
+
+  private List<Document> attachKeywords(List<Document> documents) {
+    KeywordMetadataEnricher keywordMetadataEnricher =
+        KeywordMetadataEnricher.builder(chatModel).keywordCount(10).build();
+    return keywordMetadataEnricher.apply(documents);
   }
 }

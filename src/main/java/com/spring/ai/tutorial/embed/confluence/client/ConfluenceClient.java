@@ -1,7 +1,7 @@
-package com.spring.ai.tutorial.confluence.client;
+package com.spring.ai.tutorial.embed.confluence.client;
 
-import com.spring.ai.tutorial.confluence.model.ConfluenceDocument;
-import com.spring.ai.tutorial.confluence.model.ConfluenceDocumentPage;
+import com.spring.ai.tutorial.embed.confluence.model.ConfluenceDocument;
+import com.spring.ai.tutorial.embed.confluence.model.ConfluenceDocumentPage;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
