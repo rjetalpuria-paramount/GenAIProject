@@ -6,9 +6,9 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @EnableFeignClients
 @SpringBootApplication
-public class SpringAiTutorialApplication {
+public class GenAIProjectApplication {
 
   public static void main(String[] args) {
-    SpringApplication.run(SpringAiTutorialApplication.class, args);
+    SpringApplication.run(GenAIProjectApplication.class, args);
   }
 }
