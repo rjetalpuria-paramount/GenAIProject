@@ -10,9 +10,7 @@ import org.springframework.util.CollectionUtils;
 
 public interface EmbeddingService<T> {
   Logger logger = LoggerFactory.getLogger(EmbeddingService.class);
-  TokenTextSplitter splitter = TokenTextSplitter.builder()
-          .withChunkSize(256)
-          .build();
+  TokenTextSplitter splitter = TokenTextSplitter.builder().withChunkSize(256).build();
 
   PgVectorStore getVectorStore();
 
