@@ -2,8 +2,12 @@ package com.spring.ai.tutorial.embed.confluence.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 
+@ToString
+@EqualsAndHashCode
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ConfluenceDocument {
   @Getter
@@ -14,9 +18,11 @@ public class ConfluenceDocument {
   @JsonProperty("title")
   private String title;
 
+  @ToString.Exclude
   @JsonProperty("body")
   private DocBody body;
 
+  @ToString.Exclude
   @JsonProperty("_links")
   private Links links;
 

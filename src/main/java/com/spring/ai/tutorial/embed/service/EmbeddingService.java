@@ -10,7 +10,9 @@ import org.springframework.util.CollectionUtils;
 
 public interface EmbeddingService<T> {
   Logger logger = LoggerFactory.getLogger(EmbeddingService.class);
-  TokenTextSplitter splitter = new TokenTextSplitter();
+  TokenTextSplitter splitter = TokenTextSplitter.builder()
+          .withChunkSize(256)
+          .build();
 
   PgVectorStore getVectorStore();
 
@@ -43,8 +45,12 @@ public interface EmbeddingService<T> {
   }
 
   private void generateEmbeddings(T rawDocument) {
-    List<Document> documents = convertToDocuments(rawDocument);
-    List<Document> chunks = splitter.apply(documents);
-    getVectorStore().add(chunks);
+    try {
+      List<Document> documents = convertToDocuments(rawDocument);
+      List<Document> chunks = splitter.apply(documents);
+      getVectorStore().add(chunks);
+    } catch (Exception e) {
+      logger.error("Error generating embeddings for document {}: ", rawDocument, e);
+    }
   }
 }
