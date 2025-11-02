@@ -1,5 +1,6 @@
 package com.spring.ai.tutorial.embed.service;
 
+import java.time.Duration;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +26,7 @@ public interface EmbeddingService<T> {
     int startIndex = 0;
     int pageSize = 10;
 
+    long startTime = System.currentTimeMillis();
     List<T> rawDocuments;
     do {
       logger.info("Embedding documents from index: {} - {}", startIndex, startIndex + pageSize - 1);
@@ -34,6 +36,8 @@ public interface EmbeddingService<T> {
       rawDocuments.forEach(this::generateEmbeddings);
       startIndex += pageSize;
     } while (rawDocuments.size() >= pageSize);
+    long endTime = System.currentTimeMillis();
+    logger.info("Completed embedding all documents in {}", Duration.ofMillis(endTime - startTime));
   }
 
   default void embedById(String documentId) {

@@ -42,16 +42,16 @@ public class ChatService {
   private OpenAiChatOptions chatOptions;
   private OpenAiChatOptions streamingChatOptions;
 
-  @Value("${com.ai.springAiTutorial.model}")
+  @Value("${com.ai.genAiProject.model}")
   private String modelName;
 
-  @Value("${com.ai.springAiTutorial.topP}")
+  @Value("${com.ai.genAiProject.topP}")
   private Double topP;
 
-  @Value("${com.ai.springAiTutorial.temperature}")
+  @Value("${com.ai.genAiProject.temperature}")
   private Double temperature;
 
-  @Value("${com.ai.springAiTutorial.chatMemorySize}")
+  @Value("${com.ai.genAiProject.chatMemorySize}")
   private Integer chatMemorySize;
 
   private final Predicate<ChatResponse> isResponseValid =
