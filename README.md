@@ -20,51 +20,47 @@ Spring Boot project implementing a self-hosted RAG (Retrieval Augmented Generati
    - Models used:
      - [nomic-embed-text-v2-moe-GGUF](https://huggingface.co/nomic-ai/nomic-embed-text-v2-moe-GGUF)
      - [openai/gpt-oss-20b](https://lmstudio.ai/models/openai/gpt-oss-20b)
-3. Nginx Proxy: For converting HTTP2 request made by the OpenAI client to HTTP1.1.
+3. Docker: For hosting Nginx and PostgreSQL
+  ```bash
+  docker-compose -f ./docker/docker-compose.yaml up -d
+  ```
+  - Nginx Proxy: For converting HTTP2 request made by the OpenAI client to HTTP1.1.
     - Listens on port 8081 and forwards requests to LM Studio on port 1234.
-    - Run the following in the terminal:
-    ```bash
-    docker-compose -f ./nginx/docker-compose.yaml up -d
-    ```
-4. PostgreSQL: Database for storing chat data.
+  - PostgreSQL: Database for storing chat data.
     - Listens on port 8082
-    - Run the following in the terminal:
-    ```bash
-    docker-compose -f ./postgres/docker-compose.yaml up -d
-    ```
-   - Make sure the specify the following environment variables for setting up the database connection:
-    ```yaml
-    `DB_URL` # JDBC URL e.g. jdbc:postgresql://localhost:5432/my_database
-    `DB_USERNAME` # username
-    `DB_PASSWORD` # password
-    ```
-   - The project uses the DB to store chat history via Spring's JdbcChatMemory, and Spring expects `spring_ai_chat_memory` table to be present in the database.
-     - Run the following SQL query to set up the table:
-       ```sql
-       CREATE TABLE spring_ai_chat_memory (
-         "id" SERIAL NOT NULL,
-         "conversation_id" VARCHAR(40),
-         "content" TEXT NOT NULL,
-         "type" VARCHAR(10) NOT NULL,
-         "timestamp" TIMESTAMP NOT NULL DEFAULT NOW(),
-         PRIMARY KEY (id)
-       );
-       CREATE INDEX idx_memory_conversation_id ON ai_chat_memory ("conversation_id");
-       ```
-     - Run the following SQL query to set up the table and index for vector store: ([source](https://docs.spring.io/spring-ai/reference/1.0/api/vectordbs/pgvector.html#_prerequisites))
-       ```sql
-       CREATE EXTENSION IF NOT EXISTS vector;
-       CREATE EXTENSION IF NOT EXISTS hstore;
-       CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-       CREATE TABLE IF NOT EXISTS vector_store (
-       id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
-       content text,
-       metadata json,
-       embedding vector(768) -- 1536 is the default embedding dimension
-       );
-       CREATE INDEX ON vector_store USING HNSW (embedding vector_cosine_ops);
-       ```
-5. Atlassian PAT (Personal Access Token)
+    - Make sure the specify the following environment variables for setting up the database connection:
+     ```yaml
+     DB_URL # JDBC URL e.g. jdbc:postgresql://localhost:5432/my_database
+     DB_USERNAME # username
+     DB_PASSWORD # password
+     ```
+    - The project uses the DB to store chat history via Spring's JdbcChatMemory, and Spring expects `spring_ai_chat_memory` table to be present in the database.
+      - Run the following SQL query to set up the table:
+        ```sql
+        CREATE TABLE spring_ai_chat_memory (
+          "id" SERIAL NOT NULL,
+          "conversation_id" VARCHAR(40),
+          "content" TEXT NOT NULL,
+          "type" VARCHAR(10) NOT NULL,
+          "timestamp" TIMESTAMP NOT NULL DEFAULT NOW(),
+          PRIMARY KEY (id)
+        );
+        CREATE INDEX idx_memory_conversation_id ON ai_chat_memory ("conversation_id");
+        ```
+      - Run the following SQL query to set up the table and index for vector store: ([source](https://docs.spring.io/spring-ai/reference/1.0/api/vectordbs/pgvector.html#_prerequisites))
+        ```sql
+        CREATE EXTENSION IF NOT EXISTS vector;
+        CREATE EXTENSION IF NOT EXISTS hstore;
+        CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+        CREATE TABLE IF NOT EXISTS vector_store (
+        id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
+        content text,
+        metadata json,
+        embedding vector(768) -- 1536 is the default embedding dimension
+        );
+        CREATE INDEX ON vector_store USING HNSW (embedding vector_cosine_ops);
+        ```
+4. Atlassian PAT (Personal Access Token)
    - Navigate [here](https://id.atlassian.com/manage-profile/security/api-tokens) and create a new token
    - Once created, base64 encode your email and token: `<your_email>:<your_token>`
      ```bash
