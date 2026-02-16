@@ -59,6 +59,10 @@ dependencies {
 
     // Misc utilities
     implementation 'org.apache.commons:commons-lang3:3.19.0'
+
+	//Slack
+	implementation 'com.slack.api:slack-api-model:1.47.0'
+	implementation 'com.slack.api:slack-app-backend:1.47.0'
 }
 
 dependencyManagement {

@@ -19,6 +19,10 @@ services:
       - "8082:5432"
     volumes:
       - ../../pgdata:/var/lib/postgresql/data # Replace with your desired volume location
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared_tunnel
+    command: tunnel --url http://192.168.1.211:8080 # Replace with your local IP and port of Spring server
 
 volumes:
   pgdata:
