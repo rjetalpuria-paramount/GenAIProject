@@ -1,9 +1,9 @@
 package com.spring.ai.tutorial.slack.service;
 
 import com.slack.api.app_backend.slash_commands.SlashCommandResponseSender;
-import com.slack.api.app_backend.slash_commands.payload.SlashCommandPayload;
 import com.slack.api.app_backend.slash_commands.response.SlashCommandResponse;
 import com.spring.ai.tutorial.chat.service.ChatService;
+import com.spring.ai.tutorial.slack.model.SlackJobPayload;
 import java.io.IOException;
 import java.util.Queue;
 import java.util.UUID;
@@ -18,27 +18,27 @@ public class SlackJobService {
   private final ChatService chatService;
   private final SlashCommandResponseSender slashCommandResponseSender;
 
-  Queue<SlashCommandPayload> jobQueue = new java.util.concurrent.ConcurrentLinkedQueue<>();
+  Queue<SlackJobPayload> jobQueue = new java.util.concurrent.ConcurrentLinkedQueue<>();
 
-  public void addJob(SlashCommandPayload job) {
+  public void addJob(SlackJobPayload job) {
     jobQueue.offer(job);
   }
 
   public void processNextJob() {
-    SlashCommandPayload job = jobQueue.poll();
+    SlackJobPayload job = jobQueue.poll();
     if (job == null) {
       return;
     }
     UUID chatId = UUID.randomUUID();
-    String response = chatService.getResponse(job.getText(), chatId);
+    String response = chatService.getResponse(job.text(), chatId);
 
-    sendSlackCommandResponse(job, response);
+    sendSlackCommandResponse(job.responseUrl(), response);
   }
 
-  private void sendSlackCommandResponse(SlashCommandPayload job, String message) {
+  private void sendSlackCommandResponse(String responseUrl, String message) {
     try {
       slashCommandResponseSender.send(
-          job.getResponseUrl(), SlashCommandResponse.builder().text(message).build());
+          responseUrl, SlashCommandResponse.builder().text(message).build());
     } catch (IOException e) {
       log.error("Failed to send response to Slack", e);
     }
