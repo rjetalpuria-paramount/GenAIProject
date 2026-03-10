@@ -21,19 +21,38 @@ public class BoltSlackAppConfig {
   public App initSlackApp(SlackJobService slackJobService) {
     App app = new App();
     app.command(
-        "/help",
+        "/gen-ai-help",
         (req, ctx) -> {
           slackJobService.addJob(
-              new SlackJobPayload(req.getPayload().getText(), req.getPayload().getResponseUrl()));
+              SlackJobPayload.slashCommand(
+                  req.getPayload().getText(), req.getPayload().getResponseUrl()));
           return ctx.ack("Your request is being processed. You will receive a response shortly.");
         });
 
     app.event(
         AppMentionEvent.class,
         (payload, ctx) -> {
-          //                String text = payload.getEvent().getText();
-          //                slackJobService.addJob(
-          //                        new SlackJobPayload(text, null));
+          AppMentionEvent event = payload.getEvent();
+          String channel = event.getChannel();
+          String threadTs = event.getTs();
+          String text = event.getText();
+          if (text != null) {
+            text = text.replaceFirst("^<@\\w+>\\s*", "").trim();
+          } else {
+            text = "";
+          }
+
+          slackJobService.addJob(SlackJobPayload.appMention(text, channel, threadTs));
+
+          ctx.client()
+              .chatPostMessage(
+                  r ->
+                      r.channel(channel)
+                          .threadTs(threadTs)
+                          .text(
+                              "Your request is being processed. You will receive a response"
+                                  + " shortly."));
+
           return ctx.ack();
         });
     return app;
