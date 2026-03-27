@@ -1,6 +1,6 @@
 # GenAI Project:
 
-Spring Boot project implementing a self-hosted RAG (Retrieval Augmented Generation) system using Spring AI, integrating with internal documentation sources like Confluence, and leveraging open-source LLMs via OpenAI-compatible APIs.
+Slack bot that answers questions based on internal documentation using a self-hosted RAG system built with Spring Boot and Spring AI, integrating with Confluence for document retrieval, and leveraging open-source LLMs via OpenAI-compatible APIs.
 
 ## Principles:
 1. **No Paid APIs or Tools**: Focus on using open-source tools and libraries.
@@ -12,21 +12,25 @@ Spring Boot project implementing a self-hosted RAG (Retrieval Augmented Generati
    - The solution should be hosted locally, allowing for full control over the environment and data.
    - This is achieved by using LM Studio for LLM models, Nginx for HTTP2 to HTTP1.1 conversion, and PostgreSQL for chat history storage.
 
+## Architecture Diagram:
+![architecture-diagram.png](architecture-diagram.png)
+
 ## Local Setup:
 1. A checkout of this repo
     - Listens on port 8080 and calls the model hosted on LM Studio via Nginx.
 2. LM Studio: Download and host LLM models locally.
    - Listens on port 1234 (default)
    - Models used:
-     - [nomic-embed-text-v2-moe-GGUF](https://huggingface.co/nomic-ai/nomic-embed-text-v2-moe-GGUF)
-     - [openai/gpt-oss-20b](https://lmstudio.ai/models/openai/gpt-oss-20b)
+     - [nomic-ai/nomic-embed-text-v1.5-GGUF](https://huggingface.co/nomic-ai/nomic-embed-text-v1.5-GGUF)
+     - [google/gemma-3-12b](https://lmstudio.ai/models/google/gemma-3-12b)
 3. Docker: For hosting Nginx and PostgreSQL
   ```bash
   docker-compose -f ./docker/docker-compose.yaml up -d
   ```
-  - Nginx Proxy: For converting HTTP2 request made by the OpenAI client to HTTP1.1.
+  - **Nginx Proxy:** For converting HTTP2 request made by the OpenAI client to HTTP1.1.
     - Listens on port 8081 and forwards requests to LM Studio on port 1234.
-  - PostgreSQL: Database for storing chat data.
+    - Ensure the nginx.conf file has the correct LM Studio host IP Address and port configuration.
+  - **PostgreSQL:** Database for storing chat data.
     - Listens on port 8082
     - Make sure the specify the following environment variables for setting up the database connection:
      ```yaml
@@ -60,14 +64,42 @@ Spring Boot project implementing a self-hosted RAG (Retrieval Augmented Generati
         );
         CREATE INDEX ON vector_store USING HNSW (embedding vector_cosine_ops);
         ```
-4. Atlassian PAT (Personal Access Token)
+  - **Cloudflare Tunnel**: For exposing the Spring Boot backend to the internet for testing Slack integration.
+    - Ensure the docker-compose.yaml file has the correct IP Address and port configuration of the Spring Boot backend.
+4. Atlassian PAT (Personal Access Token) for Confluence API access:
    - Navigate [here](https://id.atlassian.com/manage-profile/security/api-tokens) and create a new token
    - Once created, base64 encode your email and token: `<your_email>:<your_token>`
      ```bash
      echo -n your_email:your_token | base64
      ```
    - Save the encoded result in an environment variable called `ATL_TOKEN`
+     ```yaml
+     ATL_TOKEN # base64 encoded string of <your_email>:<your_token>
+     ```
+   - Also specify the Confluence base URL and space key as environment variables:
+     ```yaml
+     CONFLUENCE_BASE_URL # e.g. https://your-domain.atlassian.net/wiki
+     CONFLUENCE_SPACE_KEY # e.g. MYSPACE
+     ```
    - Ref: [Confluence REST API Documentation](https://docs.atlassian.com/atlassian-confluence/REST/6.6.0/)
+5. Slack Integration for Chatbot:
+    - Provision a new Slack sandbox workspace for testing the chatbot integration: https://api.slack.com/developer-program/dashboard. If you have an actual workspace to test, you may use that instead.
+    - Create a new Slack app here: https://api.slack.com/apps, and add the bot to your slack workspace.
+    - From the Slack app control panel, get the signing secret and bot user's OAuth token and save them as environment variables:
+      ```yaml
+      SLACK_SIGNING_SECRET # e.g. 1234XXXXXXXXXXXXXXXXXXXXXXXXX
+      SLACK_BOT_TOKEN # e.g. xoxb-xxxxxxxxxxxx-xxxxxxxxxxxx-xxxxxxxxxxxx
+      ```
+    - Set up an event subscription in your Slack app to listen for messages in channels or direct messages where the bot is mentioned.
+      - Add the Bot permissions: OAuth & Permissions > Bot Token Scopes > Add the following scopes:
+        - `app_mentions:read` (to read messages where the bot is mentioned)
+        - `assistants:write` (to allow the bot to send messages in threads)
+        - `chat:write` (to allow the bot to send messages)
+        - `incoming-webhook` (to allow the bot to receive messages via webhooks)
+      - Subscribe to bot events: Event Subscriptions > Subscribe to Bot Events > Add the following events:
+        - `app_mention` (to receive events when the bot is mentioned in channels)
+      - Set up the Request URL for event subscriptions to point to your Spring Boot backend exposed via Cloudflare Tunnel, e.g. `https://your-tunnel-url.com/api/slack/events`
+        - Check the cloud-flare tunnel logs to get the correct URL.
 
 ## Problems Faced:
 ### Problem: OpenAI API is paid, and I didn't want to pay for it.
