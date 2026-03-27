@@ -1,4 +1,6 @@
-# GenAI Project:
+<img src="docsy-logo.png" alt="docsy-logo" style="width:128px"/>
+
+# Docsy: Slackbot powered by GenAI!
 
 Slack bot that answers questions based on internal documentation using a self-hosted RAG system built with Spring Boot and Spring AI, integrating with Confluence for document retrieval, and leveraging open-source LLMs via OpenAI-compatible APIs.
 

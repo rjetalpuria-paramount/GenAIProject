@@ -8,9 +8,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableFeignClients
 @EnableScheduling
 @SpringBootApplication
-public class GenAIProjectApplication {
+public class DocsyApplication {
 
   public static void main(String[] args) {
-    SpringApplication.run(GenAIProjectApplication.class, args);
+    SpringApplication.run(DocsyApplication.class, args);
   }
 }
